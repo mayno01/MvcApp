@@ -1,0 +1,94 @@
+﻿@model List<MvcApp.Models.User>
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Admin Dashboard</h2>
+
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+            Back to Home
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Avatar</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (user.ProfilePicture != null)
+                                {
+                                    <img src="data:image/png;base64,@Convert.ToBase64String(user.ProfilePicture)"
+                                         class="rounded-circle"
+                                         width="50" height="50" />
+                                }
+                                else
+                                {
+                                    <img src="https://via.placeholder.com/50"
+                                         class="rounded-circle" />
+                                }
+                            </td>
+
+                            <td>@user.Username</td>
+                            <td>@user.Email</td>
+                            <td>
+                                @if (user.IsBlocked)
+                                {
+                                    <span class="badge bg-secondary">Blocked</span>
+                                }
+                                else
+                                {
+                                    <span class="badge @(user.Role == "Admin" ? "bg-danger" : "bg-primary")">
+                                        @user.Role
+                                    </span>
+                                }
+                            </td>
+
+
+                            <td>
+                                @if (!user.IsBlocked)
+                                {
+                                    <form asp-action="ToggleBlock" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            Block
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="ToggleBlock" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button class="btn btn-sm btn-outline-success">
+                                            Unblock
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+</div>
