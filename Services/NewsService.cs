@@ -14,8 +14,10 @@ namespace MvcApp.Services
             _config = config;
         }
 
-        public async Task<List<NewsArticle>> GetTopHeadlinesAsync(string category = "general")
+        public async Task<List<NewsArticle>> GetTopHeadlinesAsync(string category)
+
         {
+
             var apiKey = _config["NewsApi:ApiKey"];
 
             var url = $"https://newsapi.org/v2/top-headlines" +
@@ -48,8 +50,10 @@ namespace MvcApp.Services
                     Url = item.GetProperty("url").GetString() ?? "",
                     UrlToImage = item.GetProperty("urlToImage").GetString() ?? "",
                     PublishedAt = item.GetProperty("publishedAt").GetDateTime(),
-                    Source = item.GetProperty("source").GetProperty("name").GetString() ?? ""
+                    Source = item.GetProperty("source").GetProperty("name").GetString() ?? "",
+                    Category = category 
                 });
+
             }
 
             return newsList;

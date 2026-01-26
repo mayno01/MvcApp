@@ -7,74 +7,353 @@
 <div class="container mt-4">
 
     <div class="mb-4">
-        <a asp-action="Index" asp-route-category="general" class="btn btn-outline-primary me-2">General</a>
-        <a asp-action="Index" asp-route-category="business" class="btn btn-outline-primary me-2">Business</a>
-        <a asp-action="Index" asp-route-category="technology" class="btn btn-outline-primary me-2">Technology</a>
-        <a asp-action="Index" asp-route-category="sports" class="btn btn-outline-primary me-2">Sports</a>
-        <a asp-action="Index" asp-route-category="health" class="btn btn-outline-primary me-2">Health</a>
-        <a asp-action="Index" asp-route-category="science" class="btn btn-outline-primary me-2">Science</a>
-        <a asp-action="Index" asp-route-category="entertainment" class="btn btn-outline-primary">Entertainment</a>
+        @{
+            string active = ViewBag.ActiveCategory ?? "";
+        }
+
+        <a asp-action="Index" class="btn btn-outline-dark me-2 @(active == "For You" ? "active" : "")">
+            For You
+        </a>
+
+        <a asp-action="Index" asp-route-category="general"
+           class="btn btn-outline-primary me-2 @(active == "general" ? "active" : "")">
+            General
+        </a>
+
+        <a asp-action="Index" asp-route-category="business"
+           class="btn btn-outline-primary me-2 @(active == "business" ? "active" : "")">
+            Business
+        </a>
+
+        <a asp-action="Index" asp-route-category="technology"
+           class="btn btn-outline-primary me-2 @(active == "technology" ? "active" : "")">
+            Technology
+        </a>
+
+        <a asp-action="Index" asp-route-category="sports"
+           class="btn btn-outline-primary me-2 @(active == "sports" ? "active" : "")">
+            Sports
+        </a>
+
+        <a asp-action="Index" asp-route-category="health"
+           class="btn btn-outline-primary me-2 @(active == "health" ? "active" : "")">
+            Health
+        </a>
+
+        <a asp-action="Index" asp-route-category="science"
+           class="btn btn-outline-primary me-2 @(active == "science" ? "active" : "")">
+            Science
+        </a>
+
+        <a asp-action="Index" asp-route-category="entertainment"
+           class="btn btn-outline-primary @(active == "entertainment" ? "active" : "")">
+            Entertainment
+        </a>
+
     </div>
 
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Latest News</h2>
 
-        <form asp-controller="Auth" asp-action="Logout" method="get">
-            <button class="btn btn-danger">Logout</button>
-        </form>
+        @* <form asp-controller="Auth" asp-action="Logout" method="get"> *@
+        @*     <button class="btn btn-danger">Logout</button> *@
+        @* </form> *@
+        @* <a asp-action="Saved" class="btn btn-outline-secondary me-2">Saved Articles</a> *@
+
+        <div>
+            <a asp-action="Saved" class="btn btn-outline-secondary me-2">Saved Articles</a>
+            <form asp-controller="Auth" asp-action="Logout" method="get" class="d-inline">
+                <button class="btn btn-danger">Logout</button>
+            </form>
+        </div>
+
     </div>
 
     <div class="row">
         @foreach (var news in Model)
         {
+
             <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    @if (!string.IsNullOrEmpty(news.UrlToImage))
-                    {
-                        <img src="@news.UrlToImage" class="card-img-top" style="height: 200px; object-fit: cover;">
-                    }
-                    <div class="card-body">
-                        <h5 class="card-title">@news.Title</h5>
-                        <p class="card-text">@news.Description</p>
+                <div class="card news-card h-100 border-0">
+
+                    <div class="position-relative">
+                        @if (!string.IsNullOrEmpty(news.UrlToImage))
+                        {
+                            <img src="@news.UrlToImage"
+                                 class="card-img-top news-img">
+                        }
+
+                        <span class="badge category-badge text-uppercase">
+                            @news.Category
+                        </span>
                     </div>
-                    <div class="card-footer bg-white">
 
-                        <small class="text-muted">@news.Source • @news.PublishedAt.ToShortDateString()</small>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold">
+                            @news.Title
+                        </h5>
 
-                        <div class="float-end d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-info speak-btn"
+                        <p class="card-text text-muted small flex-grow-1">
+                            @news.Description
+                        </p>
+                    </div>
+
+                    <div class="card-footer bg-white border-0 pt-0">
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">
+                                @news.Source • @news.PublishedAt.ToShortDateString()
+                            </small>
+
+                            <button class="btn btn-sm btn-light speak-btn"
+                                    title="Read aloud"
                                     data-title="@news.Title"
                                     data-desc="@news.Description">
-                                🔊 Read
+                                🔊
                             </button>
-
-                            <a href="@news.Url" target="_blank"
-                               class="btn btn-sm btn-outline-primary">
-                                Read
-                            </a>
                         </div>
 
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <a href="@news.Url"
+                               target="_blank"
+                               class="btn btn-sm btn-primary">
+                                Read more →
+                            </a>
+
+                            <div class="btn-group">
+                                @{
+                                    var likesCount = ViewData["LikesCount"] as Dictionary<string, int> ?? new Dictionary<string, int>();
+                                    int count = likesCount.ContainsKey(news.Url) ? likesCount[news.Url] : 0;
+
+                                    var userInteractions = ViewData["UserInteractions"] as Dictionary<string, MvcApp.Models.UserArticleInteraction> ?? new Dictionary<string, MvcApp.Models.UserArticleInteraction>();
+
+                                    bool isSaved = false;
+                                    bool? likedStatus = null;
+
+                                    if (userInteractions.ContainsKey(news.Url))
+                                    {
+                                        var interaction = userInteractions[news.Url];
+                                        isSaved = interaction.IsSaved;
+                                        likedStatus = interaction.IsLiked;
+                                    }
+                                }
+
+                                <button class="btn btn-sm save-btn @(isSaved ? "btn-warning" : "btn-outline-warning")"
+                                        title="Save"
+                                        data-url="@news.Url"
+                                        data-title="@news.Title"
+                                        data-category="@news.Category"
+                                        data-image="@news.UrlToImage">
+                                    ⭐
+                                </button>
+
+
+                                <button class="btn btn-sm @(likedStatus == true ? "btn-success" : "btn-outline-success") like-btn"
+                                        title="Like"
+                                        data-url="@news.Url"
+                                        data-title="@news.Title"
+                                        data-category="@news.Category"
+                                        data-like="true">
+                                    👍 <span class="like-count">@count</span>
+                                </button>
+
+
+                                <button class="btn btn-sm @(likedStatus == false ? "btn-danger" : "btn-outline-danger") like-btn"
+                                        title="Dislike"
+                                        data-url="@news.Url"
+                                        data-title="@news.Title"
+                                        data-category="@news.Category"
+                                        data-like="false">
+                                    👎
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
         }
     </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @{
+                string? categoryParam = (ViewBag.ActiveCategory != null && ViewBag.ActiveCategory.ToString() != "For You")
+                ? ViewBag.ActiveCategory.ToString()
+                : null;
+            }
+
+            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                @if (categoryParam != null)
+                {
+                    <a class="page-link" asp-action="Index" asp-route-category="@categoryParam" asp-route-page="@(ViewBag.CurrentPage - 1)">Previous</a>
+                }
+                else
+                {
+                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)">Previous</a>
+                }
+            </li>
+
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                    @if (categoryParam != null)
+                    {
+                        <a class="page-link" asp-action="Index" asp-route-category="@categoryParam" asp-route-page="@i">@i</a>
+                    }
+                    else
+                    {
+                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                    }
+                </li>
+            }
+
+            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                @if (categoryParam != null)
+                {
+                    <a class="page-link" asp-action="Index" asp-route-category="@categoryParam" asp-route-page="@(ViewBag.CurrentPage + 1)">Next</a>
+                }
+                else
+                {
+                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)">Next</a>
+                }
+            </li>
+        </ul>
+    </nav>
+
+
 
 </div>
 @section Scripts {
     <script>
+        let currentUtterance = null;
+        let currentButton = null;
+        let isPaused = false;
+
         document.querySelectorAll(".speak-btn").forEach(button => {
             button.addEventListener("click", () => {
-                const title = button.getAttribute("data-title");
-                const desc = button.getAttribute("data-desc");
 
-                const msg = new SpeechSynthesisUtterance();
-                msg.text = `${title}. ${desc}`;
-                msg.lang = "en-US"; 
+                const title = button.dataset.title;
+                const desc = button.dataset.desc;
+                const text = `${title}. ${desc}`;
 
-                window.speechSynthesis.speak(msg);
+                // ▶️ Resume
+                if (currentButton === button && speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                    isPaused = false;
+                    button.innerText = "⏸️";
+                    return;
+                }
+
+                // ⏸ Pause
+                if (currentButton === button && speechSynthesis.speaking) {
+                    speechSynthesis.pause();
+                    isPaused = true;
+                    button.innerText = "▶️";
+                    return;
+                }
+
+                // 🛑 Switching to another article
+                speechSynthesis.cancel();
+                if (currentButton) {
+                    currentButton.innerText = "🔊";
+                }
+
+                // ▶️ Start new speech
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = "en-US";
+
+                utterance.onend = () => {
+                    button.innerText = "🔊";
+                    currentUtterance = null;
+                    currentButton = null;
+                    isPaused = false;
+                };
+
+                currentUtterance = utterance;
+                currentButton = button;
+
+                button.innerText = "⏸️";
+                speechSynthesis.speak(utterance);
             });
         });
     </script>
+
+
+    <script>
+        document.querySelectorAll(".like-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+
+                const parent = btn.parentElement;
+                const likeBtn = parent.querySelector('.like-btn[data-like="true"]');
+                const dislikeBtn = parent.querySelector('.like-btn[data-like="false"]');
+                const countSpan = likeBtn.querySelector(".like-count");
+
+                let currentCount = parseInt(countSpan.innerText);
+                const isLike = btn.dataset.like === "true";
+
+                const url = btn.dataset.url;
+                const title = btn.dataset.title;
+                const category = btn.dataset.category;
+
+                await fetch("/Home/React", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&category=${category}&like=${isLike}`
+                });
+
+                // ---- UI UPDATE ----
+
+                if (isLike) {
+                    // If it was not liked before → increment
+                    if (!likeBtn.classList.contains("btn-success")) {
+                        countSpan.innerText = currentCount + 1;
+                    }
+
+                    likeBtn.classList.add("btn-success");
+                    likeBtn.classList.remove("btn-outline-success");
+
+                    dislikeBtn.classList.add("btn-outline-danger");
+                    dislikeBtn.classList.remove("btn-danger");
+                } else {
+                    // If switching from like → dislike → decrement
+                    if (likeBtn.classList.contains("btn-success") && currentCount > 0) {
+                        countSpan.innerText = currentCount - 1;
+                    }
+
+                    dislikeBtn.classList.add("btn-danger");
+                    dislikeBtn.classList.remove("btn-outline-danger");
+
+                    likeBtn.classList.add("btn-outline-success");
+                    likeBtn.classList.remove("btn-success");
+                }
+            });
+        });
+
+        document.querySelectorAll(".save-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+
+                const url = btn.dataset.url;
+                const title = btn.dataset.title;
+                const category = btn.dataset.category;
+                const image = btn.dataset.image;
+
+                await fetch("/Home/ToggleSave", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body:
+                        `url=${encodeURIComponent(url)}` +
+                        `&title=${encodeURIComponent(title)}` +
+                        `&category=${category}` +
+                        `&imageUrl=${encodeURIComponent(image)}`
+                });
+
+                btn.classList.toggle("btn-warning");
+                btn.classList.toggle("btn-outline-warning");
+            });
+        });
+
+    </script>
+
 }

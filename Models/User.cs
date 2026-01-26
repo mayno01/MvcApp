@@ -23,5 +23,10 @@ namespace MvcApp.Models
         public byte[]? ProfilePicture { get; set; }
 
         public bool IsBlocked { get; set; } = false;
+
+        public ICollection<UserCategory> UserCategories { get; set; } = new List<UserCategory>();
+        public ICollection<UserArticleInteraction> ArticleInteractions { get; set; } = new List<UserArticleInteraction>();
+
+
     }
 }

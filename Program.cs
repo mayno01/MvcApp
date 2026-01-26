@@ -20,6 +20,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddMemoryCache();
+
 
 builder.Services.AddHttpClient<NewsService>(client =>
 {

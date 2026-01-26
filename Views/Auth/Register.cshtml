@@ -1,42 +1,64 @@
-﻿@{
+﻿@using MvcApp.Models.ViewModels
+@{
     ViewData["Title"] = "Register";
     Layout = "_AuthLayout";
 }
+  
 
-
+ @model RegisterViewModel
 <div class="container vh-100 d-flex justify-content-center align-items-center">
     <div class="card shadow-lg p-4" style="width: 450px; border-radius: 15px;">
 
         <h3 class="text-center mb-4 fw-bold">Create Account</h3>
 
+       
         <form method="post">
 
             <div class="mb-3">
                 <label class="form-label">Username</label>
-                <input name="Username" class="form-control" placeholder="Choose a username" required />
+                <input asp-for="Username" class="form-control" required />
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Email</label>
-                <input name="Email" type="email" class="form-control" placeholder="Enter your email" required />
+                <input asp-for="Email" class="form-control" required />
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Password</label>
-                <input name="password" type="password" class="form-control" placeholder="Create a password" required />
+                <input asp-for="Password" type="password" class="form-control" required />
             </div>
 
-            @if (!ViewData.ModelState.IsValid)
-            {
-                <div class="alert alert-danger">
-                    Email already exists
-                </div>
-            }
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    Choose your interests
+                    <span class="text-muted">(select up to 3)</span>
+                </label>
 
-            <button type="submit" class="btn btn-success w-100 mt-2">
-                Register
-            </button>
+                <div class="row">
+                    @foreach (var cat in Model.AvailableCategories)
+                    {
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input category-checkbox"
+                                       type="checkbox"
+                                       name="SelectedCategoryIds"
+                                       value="@cat.Id" />
+                                <label class="form-check-label">
+                                    @cat.Name
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <span asp-validation-for="SelectedCategoryIds" class="text-danger"></span>
+            </div>
+
+
+            <button class="btn btn-success w-100 mt-2">Register</button>
         </form>
+
 
         <hr class="my-4" />
 
@@ -47,3 +69,19 @@
 
     </div>
 </div>
+
+<script>
+    const checkboxes = document.querySelectorAll('.category-checkbox');
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const checked = document.querySelectorAll('.category-checkbox:checked');
+
+            if (checked.length > 3) {
+                cb.checked = false;
+                alert("You can select up to 3 categories only.");
+            }
+        });
+    });
+</script>
+

@@ -4,6 +4,7 @@ using MvcApp.Data;
 using MvcApp.Models;
 using MvcApp.Services;
 using Microsoft.EntityFrameworkCore;
+using MvcApp.Models.ViewModels;
 
 namespace MvcApp.Controllers
 {
@@ -20,25 +21,63 @@ namespace MvcApp.Controllers
         }
 
         // REGISTER
-        public IActionResult Register() => View();
+        public async Task<IActionResult> Register()
+        {
+            var vm = new RegisterViewModel
+            {
+                AvailableCategories = await _context.Categories.ToListAsync()
+            };
+
+            return View(vm);
+        }
 
         [HttpPost]
-        public async Task<IActionResult> Register(User user, string password)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == user.Email))
+            if (model.SelectedCategoryIds.Count > 3)
             {
-                ModelState.AddModelError("", "Email already exists");
-                return View();
+                ModelState.AddModelError(
+                    nameof(model.SelectedCategoryIds),
+                    "You can select a maximum of 3 categories."
+                );
             }
 
-            user.PasswordHash = _hasher.HashPassword(user, password);
-            user.Role = "User"; // 🔹 default role
+            if (!ModelState.IsValid)
+            {
+                model.AvailableCategories = await _context.Categories.ToListAsync();
+                return View(model);
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
+            {
+                ModelState.AddModelError("", "Email already exists");
+                model.AvailableCategories = await _context.Categories.ToListAsync();
+                return View(model);
+            }
+
+            var user = new User
+            {
+                Username = model.Username,
+                Email = model.Email,
+                Role = "User",
+                PasswordHash = _hasher.HashPassword(null!, model.Password)
+            };
+
+            foreach (var catId in model.SelectedCategoryIds)
+            {
+                user.UserCategories.Add(new UserCategory
+                {
+                    CategoryId = catId
+                });
+            }
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
             return RedirectToAction("Login");
         }
+
+
 
 
         // LOGIN

@@ -8,5 +8,7 @@
         public string UrlToImage { get; set; } = "";
         public string Source { get; set; } = "";
         public DateTime PublishedAt { get; set; }
+
+        public string Category { get; set; } = "";
     }
 }
