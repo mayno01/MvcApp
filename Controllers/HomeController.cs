@@ -29,9 +29,7 @@ namespace MvcApp.Controllers
             _cache = cache;
         }
 
-        [Authorize]
-
-[Authorize]
+   
         [Authorize]
         public async Task<IActionResult> Index(string? category, int page = 1)
         {
