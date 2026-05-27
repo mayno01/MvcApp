@@ -12,6 +12,7 @@ namespace MvcApp.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<UserCategory> UserCategories { get; set; }
         public DbSet<UserArticleInteraction> UserArticleInteractions { get; set; }
+        public DbSet<UserAddedArticle> UserAddedArticles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -46,8 +46,29 @@ namespace MvcApp.Controllers
             if (!string.IsNullOrEmpty(category))
             {
                 // If category is specified, no caching, fetch fresh
-                news = await _newsService.GetTopHeadlinesAsync(category);
+                news = await _newsService.GetTopHeadlinesAsync(category) ?? new List<NewsArticle>();
                 ViewBag.ActiveCategory = category;
+
+                var userArticles = await _context.UserAddedArticles
+                    .Include(a => a.User)
+                    .Where(a => a.Category.ToLower() == category.ToLower())
+                    .OrderByDescending(a => a.PublishedAt)
+                    .ToListAsync();
+
+                var userArticleNews = userArticles.Select(a => new NewsArticle
+                {
+                    Title = a.Title,
+                    Description = a.Description,
+                    Url = !string.IsNullOrEmpty(a.ArticleUrl) ? a.ArticleUrl : $"#user-article-{a.Id}",
+                    UrlToImage = a.ImageData != null
+                        ? $"data:image/jpeg;base64,{Convert.ToBase64String(a.ImageData)}"
+                        : string.Empty,
+                    Source = a.User?.Username ?? "User Submitted",
+                    Category = a.Category,
+                    PublishedAt = a.PublishedAt
+                }).ToList();
+
+                news = userArticleNews.Concat(news).ToList();
             }
             else
             {
@@ -87,6 +108,38 @@ namespace MvcApp.Controllers
                         .Select(g => g.First())
                         .OrderByDescending(n => n.PublishedAt)
                         .ToList();
+
+                    // 1. Determine which DB categories to query
+                    var dbCategoryQuery = _context.UserAddedArticles.Include(a => a.User).AsQueryable();
+
+                    if (!string.IsNullOrEmpty(category))
+                    {
+                        dbCategoryQuery = dbCategoryQuery.Where(a => a.Category == category);
+                    }
+                    else
+                    {
+                        // For You Feed: use the 'categories' list generated earlier
+                        dbCategoryQuery = dbCategoryQuery.Where(a => categories.Contains(a.Category));
+                    }
+
+                    // 2. Fetch from DB
+                    var dbArticles = await dbCategoryQuery.OrderByDescending(a => a.PublishedAt).Take(10).ToListAsync();
+
+                    // 3. Map DB articles to your NewsArticle format and combine them
+                    var mappedArticles = dbArticles.Select(a => new NewsArticle
+                    {
+                        Title = a.Title,
+                        Description = a.Description,
+                        Url = !string.IsNullOrEmpty(a.ArticleUrl) ? a.ArticleUrl : "#", 
+                        UrlToImage = a.ImageData != null
+                            ? $"data:image/jpeg;base64,{Convert.ToBase64String(a.ImageData)}"
+                            : string.Empty,
+                        Source = a.User?.Username ?? "User Submitted",
+                        Category = a.Category,
+                        PublishedAt = a.PublishedAt
+                    }).ToList();
+
+                    news.AddRange(mappedArticles);
 
                     // Cache it for 10 minutes (adjust as needed)
                     var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -272,5 +325,46 @@ namespace MvcApp.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
+        [Authorize]
+        [HttpGet]
+        public IActionResult AddArticle()
+        {
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> AddArticle(AddArticleViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var email = User.Identity!.Name!;
+            var user = await _context.Users.FirstAsync(u => u.Email == email);
+
+            var article = new UserAddedArticle
+            {
+                UserId = user.Id,
+                Title = model.Title,
+                Description = model.Description,
+                Category = model.Category,
+                ArticleUrl = model.ArticleUrl,
+                PublishedAt = DateTime.UtcNow
+            };
+
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                using var ms = new MemoryStream();
+                await model.ImageFile.CopyToAsync(ms);
+                article.ImageData = ms.ToArray();
+            }
+
+            _context.UserAddedArticles.Add(article);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

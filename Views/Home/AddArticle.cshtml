@@ -1,0 +1,51 @@
+﻿@model MvcApp.Models.ViewModels.AddArticleViewModel
+
+@{
+    ViewData["Title"] = "Add Article";
+}
+
+<div class="container mt-4">
+    <h2>Add an Article</h2>
+
+    <!-- 🔹 Required to support file uploads -->
+    <form asp-action="AddArticle" method="post" enctype="multipart/form-data">
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Category" class="form-label"></label>
+            <select asp-for="Category" class="form-select">
+                <option value="general">General</option>
+                <option value="business">Business</option>
+                <option value="technology">Technology</option>
+                <option value="sports">Sports</option>
+                <option value="health">Health</option>
+                <option value="science">Science</option>
+                <option value="entertainment">Entertainment</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ArticleUrl" class="form-label">Link (Optional)</label>
+            <input asp-for="ArticleUrl" class="form-control" placeholder="https://..." />
+        </div>
+
+        <!-- 🔹 Replaced ImageUrl with a File Input -->
+        <div class="mb-3">
+            <label asp-for="ImageFile" class="form-label">Article Image</label>
+            <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add Article</button>
+    </form>
+</div>
